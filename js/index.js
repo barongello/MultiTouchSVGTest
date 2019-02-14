@@ -81,8 +81,8 @@ const strokeToPath = (inPoints, inPathCommand) => {
 };
 
 const inputDownDrawHandler = (event) => {
-  let isTouchEvent = event instanceof TouchEvent;
-  let isMouseEvent = event instanceof MouseEvent;
+  let isTouchEvent = (window.TouchEvent !== void 0 && event instanceof TouchEvent === true);
+  let isMouseEvent = (window.MouseEvent !== void 0 && event instanceof MouseEvent === true);
 
   if(isTouchEvent === false && isMouseEvent === false) {
     return;
@@ -186,8 +186,8 @@ const inputDownDrawHandler = (event) => {
   }
 
   const inputMoveHandler = (event) => {
-    let isTouchEvent = event instanceof TouchEvent;
-    let isMouseEvent = event instanceof MouseEvent;
+    let isTouchEvent = (window.TouchEvent !== void 0 && event instanceof TouchEvent === true);
+    let isMouseEvent = (window.MouseEvent !== void 0 && event instanceof MouseEvent === true);
 
     if(isTouchEvent === true) {
       for(let touch of event.changedTouches) {
@@ -325,8 +325,8 @@ const inputDownDrawHandler = (event) => {
   }
 
   const inputUpHandler = (event) => {
-    let isTouchEvent = event instanceof TouchEvent;
-    let isMouseEvent = event instanceof MouseEvent;
+    let isTouchEvent = (window.TouchEvent !== void 0 && event instanceof TouchEvent === true);
+    let isMouseEvent = (window.MouseEvent !== void 0 && event instanceof MouseEvent === true);
 
     if(isTouchEvent === true) {
       for(let touch of event.changedTouches) {
