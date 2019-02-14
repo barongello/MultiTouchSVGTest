@@ -1,7 +1,8 @@
 let whiteboard = null;
 let touchesList = {};
 let selectedMode = 'draw';
-let strokeColor = '#ff0000';
+let strokeColor = [255, 0, 0];
+let strokeColorAlpha = 1;
 let strokeWidth = 4;
 
 
@@ -24,25 +25,15 @@ const guid = () => {
   return guid.value;
 };
 
-const rgbToHexColor = (inR, inG, inB) => {
-  let r = Math.min(Math.max(0, inR), 255).toString(16);
-  let g = Math.min(Math.max(0, inG), 255).toString(16);
-  let b = Math.min(Math.max(0, inB), 255).toString(16);
+const randomRGBColor = () => [parseInt(Math.random() * 256), parseInt(Math.random() * 256), parseInt(Math.random() * 256)];
 
-  if(r < 16) {
-    r = `0${r}`;
-  }
+const buildStrokeColor = () => {
+  let color = (strokeColor !== 'random' ? strokeColor : randomRGBColor());
 
-  if(g < 16) {
-    g = `0${g}`;
-  }
+  return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${strokeColorAlpha})`;
+}
 
-  if(b < 16) {
-    b = `0${b}`;
-  }
-
-  return `#${r}${g}${b}`;
-};
+const buildStrokeWidth = () => (strokeWidth !== 'random' ? strokeWidth : Math.pow(2, parseInt(Math.random() * 4) + 2));
 
 const line = (inPointA, inPointB) => {
   const lengthX = inPointB[0] - inPointA[0];
@@ -128,9 +119,10 @@ const inputDownDrawHandler = (event) => {
         let startX = touch.clientX - targetBoundingBox.x;
         let startY = touch.clientY - targetBoundingBox.y;
 
-        let color = (strokeColor !== 'random' ? strokeColor : rgbToHexColor(parseInt(Math.random() * 256),parseInt(Math.random() * 256),parseInt(Math.random() * 256)));
+        let color = buildStrokeColor();
+        let size = buildStrokeWidth();
 
-        stroke = SVG(target).path().fill('none').stroke(color).attr('stroke-width', strokeWidth).attr('stroke-linecap', 'round');
+        stroke = SVG(target).path().fill('none').stroke(color).attr('stroke-width', size).attr('stroke-linecap', 'round');
 
         strokeData.push([startX, startY]);
 
@@ -172,9 +164,10 @@ const inputDownDrawHandler = (event) => {
       let startX = event.clientX - targetBoundingBox.x;
       let startY = event.clientY - targetBoundingBox.y;
 
-      let color = (strokeColor !== 'random' ? strokeColor : rgbToHexColor(parseInt(Math.random() * 256),parseInt(Math.random() * 256),parseInt(Math.random() * 256)));
+      let color = buildStrokeColor();
+      let size = buildStrokeWidth();
 
-      stroke = SVG(target).path().fill('none').stroke(color).attr('stroke-width', strokeWidth).attr('stroke-linecap', 'round');
+      stroke = SVG(target).path().fill('none').stroke(color).attr('stroke-width', size).attr('stroke-linecap', 'round');
 
       strokeData.push([startX, startY]);
 
@@ -252,7 +245,7 @@ const inputDownDrawHandler = (event) => {
 
               touchSource.strokePath = `M ${moveX},${moveY}`;
               touchSource.strokeData = [[moveX, moveY]];
-              touchSource.stroke = SVG(currentTarget).path().fill('none').stroke(touchSource.stroke.attr('stroke')).attr('stroke-width', touchSource.stroke.attr('stroke-width')).attr('stroke-linecap', 'round');
+              touchSource.stroke = SVG(currentTarget).path().fill('none').stroke(touchSource.stroke.attr('stroke')).attr('stroke-width', touchSource.stroke.attr('stroke-width')).attr('stroke-linecap', touchSource.stroke.attr('stroke-linecap'));
               touchSource.target = currentTarget;
 
               touchSource.stroke.plot(touchSource.strokePath);
@@ -385,28 +378,190 @@ const inputDownDrawHandler = (event) => {
   }
 };
 
+const inputDownDragHandler = (event) => {
+  let target = null;
+  let targetElement = event.target;
+
+  while(targetElement !== document) {
+    if(targetElement.classList.contains('draggable') === true) {
+      target = targetElement;
+
+      break;
+    }
+
+    targetElement = targetElement.parentNode;
+  }
+
+  if(target === null) {
+    return;
+  }
+
+  let lastX = (event.changedTouches !== void 0 ? event.changedTouches[0] : event).clientX;
+  let lastY = (event.changedTouches !== void 0 ? event.changedTouches[0] : event).clientY;
+
+  const inputMoveHandler = (event) => {
+    let boundingBox = target.getBoundingClientRect();
+
+    let currentX = (event.changedTouches !== void 0 ? event.changedTouches[0] : event).clientX;
+    let currentY = (event.changedTouches !== void 0 ? event.changedTouches[0] : event).clientY;
+
+    target.style.left = `${boundingBox.x + currentX - lastX}px`;
+    target.style.top = `${boundingBox.y + currentY - lastY}px`;
+
+    lastX = currentX;
+    lastY = currentY;
+  };
+
+  target.addEventListener('mousemove', inputMoveHandler);
+  target.addEventListener('touchmove', inputMoveHandler);
+
+  const inputUpHandler = (event) => {
+    target.removeEventListener('touchleave', inputUpHandler);
+    target.removeEventListener('touchend', inputUpHandler);
+    target.removeEventListener('mouseleave', inputUpHandler);
+    target.removeEventListener('mouseup', inputUpHandler);
+    target.removeEventListener('touchmove', inputMoveHandler);
+    target.removeEventListener('mousemove', inputMoveHandler);
+  };
+
+  target.addEventListener('mouseup', inputUpHandler);
+  target.addEventListener('mouseleave', inputUpHandler);
+
+  target.addEventListener('touchend', inputUpHandler);
+  target.addEventListener('touchleave', inputUpHandler);
+};
+
+const inputDownNoteHandler = (event) => {
+  let target = null;
+  let targetElement = event.target;
+
+  while(targetElement !== document) {
+    if(targetElement.classList.contains('note') === true || targetElement.classList.contains('classroom') === true) {
+      target = targetElement;
+
+      break;
+    }
+
+    targetElement = targetElement.parentNode;
+  }
+
+  if(target === null) {
+    return;
+  }
+
+  if(target.classList.contains('classroom') === true) {
+    const uid = guid();
+
+    let div = document.createElement('div');
+
+    div.setAttribute('class', 'note draggable');
+    div.setAttribute('id', `note-${uid}`);
+
+    div.style.left = `${event.clientX - 100}px`;
+    div.style.top = `${event.clientY - 100}px`;
+
+    document.getElementById('classroom').appendChild(div);
+
+    let titlebar = document.createElement('div');
+
+    titlebar.classList.add('titlebar');
+
+    div.appendChild(titlebar);
+
+    let textarea = document.createElement('textarea');
+
+    textarea.addEventListener('focus', (event) => {
+      svg.classList.add('disabled');
+    });
+
+    textarea.addEventListener('blur', (event) => {
+      svg.classList.remove('disabled');
+    });
+
+    div.appendChild(textarea);
+
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+    svg.setAttribute('id', `note-${uid}-svg`);
+    svg.setAttribute('class', 'disabled');
+
+    div.appendChild(svg);
+
+    SVG(`#note-${uid}-svg`).size('100%', '100%');
+
+    setTimeout(() => textarea.focus(), 0);
+  }
+  else {
+    let textarea = target.querySelector('textarea');
+
+    setTimeout(() => textarea.focus(), 0);
+  }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   whiteboard = SVG('#whiteboard').size('100%', '100%');
 
   const inputDownHandler = (event) => {
-    if(selectedMode === 'draw') {
+    let target = null;
+    let targetElement = event.target;
+
+    while(targetElement !== document) {
+      if(targetElement.classList.contains('titlebar') === true || targetElement.classList.contains('note') === true || targetElement.classList.contains('classroom') === true) {
+        target = targetElement;
+
+        break;
+      }
+
+      targetElement = targetElement.parentNode;
+    }
+
+    if(target === null) {
+      return;
+    }
+
+    if(target.classList.contains('titlebar') === true) {
+      return inputDownDragHandler(event);
+    }
+    else if(target.classList.contains('note') === true) {
+      let downPosition = (event.touches !== void 0 ? event.touches[0] : event)
+      let titlebar = target.querySelector('.titlebar');
+      let boundingBox = titlebar.getBoundingClientRect();
+
+      if(downPosition.clientX >= boundingBox.x && downPosition.clientX <= boundingBox.right && downPosition.clientY >= boundingBox.y && downPosition.clientY <= boundingBox.bottom) {
+        return inputDownDragHandler(event);
+      }
+    }
+
+    if(selectedMode === 'draw' || selectedMode === 'highlight') {
       return inputDownDrawHandler(event);
     }
 
     if(selectedMode === 'drag') {
-      // TODO
+      return inputDownDragHandler(event);
     }
 
     if(selectedMode === 'note') {
-      // TODO
+      return inputDownNoteHandler(event);
     }
   };
 
   document.addEventListener('touchstart', inputDownHandler);
   document.addEventListener('mousedown', inputDownHandler);
+
+  setMode('draw');
 });
 
-const setMode = (inMode) => selectedMode = inMode;
+const setMode = (inMode) => {
+  if(inMode === 'draw') {
+    strokeColorAlpha = 1;
+  }
+  else if(inMode === 'highlight') {
+    strokeColorAlpha = 0.5;
+  }
 
-const setColor = (inColor) => strokeColor = inColor;
+  selectedMode = inMode;
+};
+
+const setStrokeWidth = (inSize) => strokeWidth = inSize;
+
+const setStrokeColor = (inColor) => strokeColor = inColor;
