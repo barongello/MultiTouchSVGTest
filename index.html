@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+
+    <title>Test</title>
+
+    <link rel="stylesheet" type="text/css" href="/MultiTouchSVGTest/css/index.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.0.11/polyfills.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.0.11/polyfillsIE.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.0.11/svg.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.js"></script>
+
+    <script src="/MultiTouchSVGTest/js/index.js"></script>
+  </head>
+  <body>
+    <div id="classroom" class="classroom">
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="whiteboard">
+      </svg>
+    </div>
+
+    <div id="toolbar">
+      <button onclick="setMode('draw')">Mode: Draw</button>
+      <button onclick="setMode('highlight')">Mode: Highlight</button>
+      <button onclick="setMode('note')">Mode: Note</button>
+      <button onclick="setMode('drag')">Mode: Move</button>
+      <br /><br />
+      <button onclick="setStrokeWidth(4)">Size: 4</button>
+      <button onclick="setStrokeWidth(8)">Size: 8</button>
+      <button onclick="setStrokeWidth(16)">Size: 16</button>
+      <button onclick="setStrokeWidth(32)">Size: 32</button>
+      <button onclick="setStrokeWidth('random')">Size: Random</button>
+      &nbsp;&nbsp;&nbsp;
+      <button onclick="setStrokeColor([255, 0, 0])">Color: Red</button>
+      <button onclick="setStrokeColor([0, 255, 0])">Color: Green</button>
+      <button onclick="setStrokeColor([0, 0, 255])">Color: Blue</button>
+      <button onclick="setStrokeColor('random')">Color: Random</button>
+    </div>
+  </body>
+</html>
